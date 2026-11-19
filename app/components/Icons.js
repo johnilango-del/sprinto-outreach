@@ -51,6 +51,18 @@ const PATHS = {
     </>
   ),
   arrow: <path d="M5 12h14M13 6l6 6-6 6" />,
+  alert: (
+    <>
+      <path d="M12 3l9.5 17h-19z" />
+      <path d="M12 10v4M12 17.5v.01" />
+    </>
+  ),
+  todo: (
+    <>
+      <circle cx="12" cy="12" r="9" />
+      <path d="M12 7v6M12 16.5v.01" />
+    </>
+  ),
 };
 
 export function Icon({ name, size }) {

@@ -93,7 +93,7 @@ export default async function Dashboard() {
 
   // Contacts found automatically: % of qualifying companies where Hunter found the person.
   const qualifying = companies.filter((c) => ['GOOD_FIT', 'GOOD_FIT_FLAGGED', 'NO_CONTACT'].includes(c.status));
-  const byHunter = qualifying.filter((c) => c.contact_source === 'hunter').length;
+  const byHunter = qualifying.filter((c) => c.contact_source === 'hunter' || c.contact_source === 'team_page_hunter').length;
   const byList = qualifying.filter((c) => c.contact_source === 'apollo_list').length;
   const autoFound = pct(byHunter, qualifying.length);
 
@@ -151,7 +151,7 @@ export default async function Dashboard() {
             label="Contacts found automatically"
             value={autoFound}
             unit={autoFound != null ? '%' : ''}
-            sub={`${byHunter} by Hunter · ${byList} from your Apollo list · ${qualifying.length - byHunter - byList} none, of ${qualifying.length} qualifying`}
+            sub={`${byHunter} automatic (Hunter or team page) · ${byList} from your backup list · ${qualifying.length - byHunter - byList} none, of ${qualifying.length} qualifying`}
           />
           <Tile label="Claims flagged" value={claimsFlagged} sub="drafts that used a claim not found on the site" />
         </div>

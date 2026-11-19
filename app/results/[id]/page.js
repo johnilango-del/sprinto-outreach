@@ -6,6 +6,8 @@ import StatusTag from '../../components/StatusTag';
 import { SectionTitle, Icon } from '../../components/Icons';
 import EmailPanel from '../../components/EmailPanel';
 import AgreeButtons from '../../components/AgreeButtons';
+import RunSummary from '../../components/RunSummary';
+import { presentRun, SOURCE_TAGS } from '@/lib/presentation';
 
 export const dynamic = 'force-dynamic';
 export const metadata = { title: 'Why card · Outreach Desk' };
@@ -63,7 +65,7 @@ export default async function WhyCard({ params }) {
       };
     } else if (run?.contact_id) {
       const { data: c } = await db().from('contacts').select('*').eq('id', run.contact_id).maybeSingle();
-      if (c) contact = { ...c, source: 'apollo_list', pick_reason: `From your Apollo list: ${c.why_chosen || 'no reason noted'}` };
+      if (c) contact = { ...c, source: 'apollo_list', pick_reason: `From your backup list: ${c.why_chosen || 'no reason noted'}` };
     }
   } catch (e) {
     loadError = e.message;
@@ -88,6 +90,8 @@ export default async function WhyCard({ params }) {
   const facts = Array.isArray(run.facts_used) ? run.facts_used : [];
   const isFit = run.status === 'GOOD_FIT' || run.status === 'GOOD_FIT_FLAGGED';
   const stepLog = Array.isArray(run.step_log) ? run.step_log : [];
+  const present = presentRun(run);
+  const attempts = Array.isArray(run.contact_attempts) ? run.contact_attempts : [];
 
   return (
     <>
@@ -109,33 +113,31 @@ export default async function WhyCard({ params }) {
 
       <section className="wrap band-overlap">
         <div className="why-grid">
-          {/* (a) decision */}
+          {/* (a) decision + action needed + (e) warnings + why + contact, clearly separated */}
           <div className="card">
             <SectionTitle icon="decision" label="Why this company: the decision" />
-            <div className="decision">
-              <StatusTag status={run.status} />
-              <span className="muted small">
-                {run.pressure_points ?? 0} pressure point{run.pressure_points === 1 ? '' : 's'} · {flags.length} flag{flags.length === 1 ? '' : 's'} · {pages.length} page fetch{pages.length === 1 ? '' : 'es'}
-              </span>
-            </div>
-            <p className="big-reason">{run.status_reason}</p>
+            <span className="muted small">
+              {run.pressure_points ?? 0} pressure point{run.pressure_points === 1 ? '' : 's'} · {flags.length} warning{flags.length === 1 ? '' : 's'} · {pages.length} page fetch{pages.length === 1 ? '' : 'es'}
+            </span>
+            <RunSummary p={present} />
+            <details style={{ marginTop: 12 }}>
+              <summary className="small" style={{ cursor: 'pointer', color: 'var(--plum-link)', fontWeight: 600 }}>
+                Full decision text and original flags
+              </summary>
+              <p className="small" style={{ margin: '8px 0' }}>{run.status_reason}</p>
+              {flags.length > 0 && (
+                <ul className="small muted" style={{ paddingLeft: 18, margin: 0 }}>
+                  {flags.map((f, i) => (
+                    <li key={i}>{f}</li>
+                  ))}
+                </ul>
+              )}
+            </details>
             <div style={{ marginTop: 18 }}>
               <div className="small muted" style={{ marginBottom: 8 }}>Do you agree with this fit decision?</div>
               <AgreeButtons id={run.id} initial={run.fit_agreement} />
             </div>
           </div>
-
-          {/* (e) flags */}
-          {flags.length > 0 && (
-            <div className="card">
-              <SectionTitle icon="flag" label={`Flags (${flags.length})`} />
-              {flags.map((f, i) => (
-                <div key={i} className={`flag ${/claim not found/.test(f) ? 'strong' : ''}`}>
-                  {f}
-                </div>
-              ))}
-            </div>
-          )}
 
           <div className="why-grid two">
             {/* (b) facts */}
@@ -254,7 +256,7 @@ export default async function WhyCard({ params }) {
                 <div className="fact-empty">
                   {run.status === 'NO_CONTACT' ? (
                     <>
-                      Neither Hunter nor your Apollo list had a suitable person. <Link href="/contacts">Add one on the Contacts page</Link>, then run it again.
+                      No source found a suitable person (see below). Optional: <Link href="/contacts">add one on Backup contacts</Link>, then run it again.
                     </>
                   ) : isFit ? (
                     'No contact linked.'
@@ -265,9 +267,7 @@ export default async function WhyCard({ params }) {
               ) : (
                 <>
                   <div style={{ marginBottom: 14 }}>
-                    <span className={`source-tag ${contact.source === 'hunter' ? 'hunter' : 'apollo'}`}>
-                      {contact.source === 'hunter' ? 'Found by Hunter' : 'From your Apollo list'}
-                    </span>
+                    <span className={`source-tag src-${contact.source}`}>{SOURCE_TAGS[contact.source] || 'Contact'}</span>
                     {contact.pick_reason && <p className="small" style={{ margin: '8px 0 0' }}>{contact.pick_reason}</p>}
                   </div>
                 <dl className="kv">
@@ -300,6 +300,18 @@ export default async function WhyCard({ params }) {
                   )}
                 </dl>
                 </>
+              )}
+              {attempts.length > 0 && (
+                <div style={{ marginTop: 16 }}>
+                  <div className="fact-name">Sources tried, in order</div>
+                  <ol className="small" style={{ paddingLeft: 20, margin: '6px 0 0' }}>
+                    {attempts.map((a, i) => (
+                      <li key={i}>
+                        <strong>{a.source}:</strong> <span className={a.ok ? 'yes' : ''}>{a.result}</span>
+                      </li>
+                    ))}
+                  </ol>
+                </div>
               )}
             </div>
 

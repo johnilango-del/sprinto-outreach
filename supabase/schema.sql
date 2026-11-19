@@ -39,7 +39,8 @@ create table if not exists public.pages (
 );
 create index if not exists pages_fetched_at_idx on public.pages (fetched_at);
 
--- 3. Hunter results: saved Domain Search replies. Reused for 30 days, so a re-run costs no credits.
+-- 3. Hunter results: saved Hunter replies, reused for 30 days so a re-run costs no credits.
+--    Domain Search is saved under the domain ("logpulse.io"); Email Finder under "finder:<domain>:<first> <last>".
 create table if not exists public.hunter_results (
   id         uuid primary key default gen_random_uuid(),
   domain     text not null unique,
@@ -61,12 +62,13 @@ create table if not exists public.runs (
   flags              jsonb not null default '[]'::jsonb,
   pages_fetched      jsonb not null default '[]'::jsonb,
   contact_id         uuid references public.contacts(id) on delete set null,  -- set only when the contact came from the Apollo list
-  contact_source     text check (contact_source in ('hunter','apollo_list')),
+  contact_source     text check (contact_source in ('hunter','team_page_hunter','apollo_list')),
   contact_name       text,
   contact_title      text,
   contact_email      text,
   contact_confidence integer,                                -- Hunter email confidence, 0-100
   pick_reason        text,
+  contact_attempts   jsonb not null default '[]'::jsonb,  -- every contact source tried and what it returned
   contact_check      jsonb,
   pain_points        jsonb,
   email_subject      text,
@@ -89,3 +91,11 @@ alter table public.contacts       enable row level security;
 alter table public.pages          enable row level security;
 alter table public.hunter_results enable row level security;
 alter table public.runs           enable row level security;
+
+-- ------------------------------------------------------------------
+-- UPGRADE for databases created before the team-page contact source (19 Nov 2026).
+-- Safe to run on a new database too: it changes nothing if already up to date.
+alter table public.runs add column if not exists contact_attempts jsonb not null default '[]'::jsonb;
+alter table public.runs drop constraint if exists runs_contact_source_check;
+alter table public.runs add constraint runs_contact_source_check
+  check (contact_source in ('hunter','team_page_hunter','apollo_list'));

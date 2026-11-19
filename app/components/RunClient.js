@@ -4,6 +4,7 @@ import { useRef, useState } from 'react';
 import Link from 'next/link';
 import { Icon } from './Icons';
 import StatusTag from './StatusTag';
+import RunSummary from './RunSummary';
 
 const STEPS = [
   { key: 'site', label: 'Site' },
@@ -64,19 +65,21 @@ function Track({ item }) {
         {STEPS.map((s) => (
           <div className="stepc" key={s.key} role="listitem" aria-label={`${s.label}: ${STATE_WORDS[item.steps[s.key]] || 'not started'}`}>
             <StepCircle state={item.steps[s.key]} />
-            <span className="lbl">{s.label}</span>
+            <span className="lbl">{s.key === 'contact' && item.contactSource ? `Contact: ${item.contactSource}` : s.label}</span>
           </div>
         ))}
       </div>
       {item.result && (
-        <div className="track-result">
-          <span>{item.result.status_reason}</span>
+        <div>
+          {item.result.present ? <RunSummary p={item.result.present} hideTag /> : <p className="small">{item.result.status_reason}</p>}
+          <div className="track-result">
           {item.result.id && (
             <Link className="readnow" href={`/results/${item.result.id}`}>
               Open the Why card →
             </Link>
           )}
           <span className="muted small">{item.result.seconds}s</span>
+          </div>
         </div>
       )}
       {item.error && <div className="notice error" style={{ marginTop: 12 }}>{item.error}</div>}
@@ -131,6 +134,7 @@ export default function RunClient() {
           if (ev.type === 'step') {
             update(index, (it) => {
               const steps = { ...it.steps, [ev.step]: ev.state };
+              const contactSource = ev.step === 'contact' && ev.source ? ev.source : it.contactSource;
               let now = it.now;
               let trail = it.trail;
               if (ev.state === 'running') {
@@ -142,7 +146,7 @@ export default function RunClient() {
                 // show the contact result, e.g. "Found by Hunter: Jane Doe, CTO"
                 trail = [...it.trail, ev.note].slice(-6);
               }
-              return { ...it, steps, now: trail.join(' → '), trail };
+              return { ...it, steps, contactSource, now: trail.join(' → '), trail };
             });
           } else if (ev.type === 'done') {
             finished = true;

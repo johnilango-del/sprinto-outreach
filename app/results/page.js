@@ -3,13 +3,15 @@ import { loadRuns, latestPerDomain } from '@/lib/runsData';
 import { db } from '@/lib/supabase';
 import { activeSender, env } from '@/lib/config';
 import StatusTag from '../components/StatusTag';
+import RunSummary from '../components/RunSummary';
+import { presentRun, SOURCE_TAGS } from '@/lib/presentation';
 
 export const dynamic = 'force-dynamic';
 export const metadata = { title: 'Results · Outreach Desk' };
 
 export default async function ResultsPage() {
   const { runs, error } = await loadRuns(
-    'id, created_at, domain, company_name, status, status_reason, flags, contact_id, contact_name, contact_source, seconds_taken, email_status'
+    'id, created_at, domain, company_name, status, status_reason, fields, pressure_points, flags, contact_id, contact_name, contact_title, contact_source, contact_attempts, pick_reason, seconds_taken, email_status, email_original'
   );
   const rows = latestPerDomain(runs);
 
@@ -55,7 +57,7 @@ export default async function ResultsPage() {
               <div className="rhead" aria-hidden="true">
                 <span>Company</span>
                 <span>Status</span>
-                <span>Reason</span>
+                <span>Verdict</span>
                 <span>Flags</span>
                 <span>Contact</span>
                 <span>Time</span>
@@ -74,7 +76,9 @@ export default async function ResultsPage() {
                     <span>
                       <StatusTag status={r.status} />
                     </span>
-                    <span className="reason">{r.status_reason}</span>
+                    <span className="reason-cell">
+                      <RunSummary p={presentRun(r)} compact hideTag />
+                    </span>
                     <span className={`cell-extra flags-n ${nFlags ? '' : 'zero'}`}>
                       <span className="k">Flags</span>
                       {nFlags}
@@ -82,7 +86,12 @@ export default async function ResultsPage() {
                     <span className="cell-extra">
                       <span className="k">Contact</span>
                       {r.contact_name || contacts[r.contact_id] || <span className="muted">none</span>}
-                      {r.contact_source === 'hunter' ? <span className="small muted"> · Hunter</span> : r.contact_source === 'apollo_list' ? <span className="small muted"> · Apollo list</span> : null}
+                      {r.contact_source ? (
+                        <>
+                          {' '}
+                          <span className={`source-tag src-${r.contact_source}`}>{SOURCE_TAGS[r.contact_source]}</span>
+                        </>
+                      ) : null}
                     </span>
                     <span className="cell-extra num">
                       <span className="k">Time</span>
