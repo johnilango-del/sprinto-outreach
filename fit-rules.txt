@@ -1,0 +1,188 @@
+SPRINTO FIT RULES: WHICH COMPANIES TO EMAIL, WHO TO EMAIL, AND HOW
+
+Source: the case brief (Term 2, AI Case 2, "Cold Outreach, at Scale") plus web research,
+November 2026. Sprinto's sweet spot is a SaaS company getting its FIRST certification
+(usually SOC 2) because bigger customers are asking for it. Sprinto is priced at the
+budget end of the market, so it suits companies without a big security team.
+Research sources: sprinto.com, trycomp.ai/when-to-get-soc-2, stmicro.net (SOC 2 guide),
+iomergent.com/saas-security, nhimg.org/startup-security-roadmap, aitoolsatlas.ai (Sprinto review).
+
+HOW TO JUDGE (the AI fills facts; plain code decides)
+- Your job is to fill the FACT FIELDS below from the pages you were given. You do NOT
+  decide whether there is "enough" information. Code checks which fields are filled,
+  adds up the points, sets the status, and decides whether to fetch another page.
+- Use ONLY evidence written on the company's own website pages that you were given.
+- For every signal you use, quote the exact words from the page and name the page.
+- No quote = no signal. Do not guess from the company's name, logo or industry.
+- Never invent facts: no funding rounds, customer names or numbers that are not on the page.
+- If a fact is not on the pages, leave its field EMPTY. An empty field is honest;
+  a guessed field is a failure. Never fill a field just because pages ran out.
+- The system fetches at most 4 extra pages beyond the homepage per company
+  (see "WHERE TO LOOK" and "EVIDENCE MAP").
+
+==================================================================
+STEP 1: DISQUALIFIERS (any one = NOT A FIT, stop here)
+==================================================================
+1. Not a software company: agency, consultancy, services firm, hardware or physical product.
+2. Sells only to individual consumers, never to businesses (no teams, plans for companies,
+   or business customers anywhere on the site).
+3. ALREADY CERTIFIED: the site names a SOC 2 or ISO 27001 certification, attestation,
+   compliance badge, or report as already achieved. (Decision: any named certification
+   puts the company out of scope; this campaign pitches the FIRST certification.)
+   Code checks the RAW page text, including the footer, BEFORE cleaning, because
+   certification badges usually sit in the footer.
+   NOTE: "in progress", "coming soon" or "underway" is NOT a disqualifier.
+   It is a STRONG signal (see Step 3).
+   NEARBY-WORDS RULE: finding "SOC 2" or "ISO 27001" is not enough on its own. A heading
+   can say "SOC 2 Type II" while the text says the audit is still underway. When the
+   name is found, code checks the same sentence and the next two lines for in-progress
+   words: "in progress", "undergoing", "underway", "pursuing", "working towards",
+   "expected", "planned", "upcoming", "coming soon", "target", "Q1/Q2/Q3/Q4 20xx".
+   Any in-progress word = STRONG signal, NOT certified. Only a plain achieved claim
+   ("certified", "compliant", "attested", "report available", "audited") disqualifies.
+   If the page is ambiguous, leave certified EMPTY and FLAG it.
+   (Found in testing: LogPulse's security page shows "SOC 2 Type II" as a heading,
+   while its compliance page says the audit is still in progress.)
+   NOTE: GDPR is a law, not a certification. "GDPR compliant" does not disqualify.
+4. Too big: a public company, a household-name enterprise, or a site showing a large
+   security organisation (a CISO plus a security team, a bug bounty programme, an
+   investor relations page).
+5. No real product yet: only a waitlist, a "coming soon" page, or a single landing page.
+
+==================================================================
+STEP 2: MUST-HAVES (both needed)
+==================================================================
+A. B2B software sold online (SaaS): customers sign up, log in, or buy plans for their team.
+B. Handles customer or company data: the product stores, processes or connects to its
+   customers' data (files, records, user accounts, integrations, payments, health or HR data).
+
+If either is missing, leave the field EMPTY. Code fetches the next page, then sets NEEDS REVIEW (2A) or assumes yes and flags it (2B).
+
+==================================================================
+STEP 3: PRESSURE SIGNALS (is the company feeling the need NOW?)
+==================================================================
+STRONG signals (each one counts as 2)
+- Security or Trust page says certification is in progress, planned, or "coming soon".
+- Job ad for a security, compliance or GRC role.
+- Named customers, logos or case studies from enterprises, banks, insurers, hospitals,
+  governments, or other regulated organisations.
+- An "Enterprise" plan, or wording like "for large teams", "SSO", "SAML", "audit logs",
+  "custom security review", "contact us for security documentation".
+
+MEDIUM signals (each one counts as 1)
+- Healthcare, finance, HR, legal or education data mentioned as part of the product.
+- Says it sells in the US, UK or Europe, or mentions GDPR or HIPAA.
+- Funding announcement or "backed by" investors on the site (any stage).
+- A Security page that exists but shows no certification at all.
+
+STATUS (set by code, not by the AI)
+- GOOD FIT: passes Steps 1 and 2, scores 2 or more points, stage confirmed.
+- GOOD FIT, FLAGGED: passes Steps 1 and 2 but something is unconfirmed after the page
+  limit (only 1 point, stage unknown, certification status unknown, or data handling
+  assumed). Email is drafted; the flag shows on the Why card. (Two of three answered,
+  one unknown = qualify and flag.)
+- NOT A FIT: fails Step 1 or Step 2, OR scores 0 points after all pages are checked.
+- NEEDS REVIEW: cannot tell whether it sells software to businesses (Step 2A) after
+  the page limit. No email; a human looks.
+- NO CONTACT: neither Hunter nor the Apollo list has a suitable person. No email.
+
+STAGE: "Series A to C" is a guide, not a rule. A seed-stage company with a strong signal
+can be a GOOD FIT. Size only disqualifies at the top end (Step 1, rule 4).
+
+WHERE TO LOOK (code fetches the next page while a field is empty, in this order)
+1. /careers or /jobs        (stage via open roles, security or compliance hires)
+2. /pricing                 (enterprise plan, SSO, team plans)
+3. /security or /trust      (certification status, security wording)
+4. /customers or /case-studies (who they sell to)
+Maximum 4 extra pages. /about is used only if it is linked from a fetched page
+and a fetch is still left.
+
+STAGE TEST (field: stage)
+Answered when ANY one is on the pages: a funding stage named (seed, Series A, B, C),
+5 or more open roles on the careers page, or an enterprise tier on the pricing page.
+
+==================================================================
+EVIDENCE MAP (one row per question; fields are filled by the AI, checked by code)
+==================================================================
+1. certified       | named SOC 2 / ISO 27001 cert, ACHIEVED (nearby-words rule) | raw footer, /security, /trust
+                   | limit 1 | unanswered: treat as not certified, FLAG
+                   | ends everything: YES (certified = NOT A FIT, stop)
+2. b2b_saas        | product description naming a business buyer | homepage, /product, /about
+                   | limit 1 | unanswered: NEEDS REVIEW
+                   | ends everything: YES (No = NOT A FIT, stop)
+3. handles_data    | product stores or processes customer data | pages already fetched
+                   | limit 0 | unanswered: assume yes for software companies, FLAG
+                   | ends everything: no
+4. pressure_score  | strong (2) and medium (1) signals, each with a quote | /careers, /pricing,
+                   | /customers, /security | limit 2 | 1 point: GOOD FIT, FLAGGED;
+                   | 0 points: NOT A FIT | ends everything: no
+5. stage           | funding stage, 5+ open roles, or enterprise tier | /careers first,
+                   | then /pricing, /about | limit 2 | unanswered: GOOD FIT, FLAGGED
+                   | ends everything: only at the top end (public or giant = NOT A FIT)
+Worst case: 4 fetches beyond the homepage.
+
+==================================================================
+STEP 4: WHO TO CONTACT (Hunter first, the Growth Lead's Apollo list as backup)
+==================================================================
+ORDER: code looks for a contact ONLY AFTER a company qualifies (GOOD FIT or
+GOOD FIT, FLAGGED). A company that fails Steps 1-3 is NOT A FIT, never NO CONTACT.
+
+SOURCE 1, HUNTER (automatic): code asks Hunter's Domain Search for the people at the
+company's domain, once per domain (results are saved and reused). Code, not the AI,
+picks the person using this ranking:
+  1. Head of Security, CISO, Security or Compliance Lead, GRC
+  2. CTO, then VP / Head of Engineering
+  3. CEO, Founder, Co-founder
+  Never: sales, business development, marketing, growth, account, partnerships,
+  interns, assistants, or generic inboxes (info@, hello@, support@).
+  Within the same rank, pick the highest email confidence. Ignore emails under 70%
+  confidence. Size check (from fit-rules Step 1-3 facts): at a small company, a
+  founder outranks a VP of Engineering.
+SOURCE 2, APOLLO LIST (backup): used only if Hunter returns nobody in the ranking,
+is out of credits, or fails. The Growth Lead looked these people up by hand.
+NO CONTACT: neither source has a suitable person.
+
+The AI never invents, chooses or changes a contact. It only checks whether the
+chosen title fits the company's size, and says so in the Why card.
+The Why card always states the source ("Found by Hunter: CTO, top-ranked role found,
+email confidence 94%" or "From your Apollo list: <the Growth Lead's reason>").
+If the email domain does not match the company's domain, FLAG it.
+
+==================================================================
+STEP 5: PAIN POINTS (pick the TWO most likely for THIS person's role)
+==================================================================
+CTO / VP or Head of Engineering
+- Engineers pulled off product work to answer security questionnaires and collect evidence.
+- Owning security informally, on top of the day job, with no clear program.
+CEO / Founder
+- Enterprise deals stalled or delayed in security review.
+- Certification has become a revenue deadline, with no one dedicated to it.
+Head of Security / Compliance Lead
+- Collecting audit evidence by hand across many tools.
+- Small or one-person team facing an audit date and repeated customer questionnaires.
+Each pain point must connect to at least one quoted signal from Step 3 for this company.
+
+==================================================================
+STEP 6: THE EMAIL (first email only)
+==================================================================
+- Address the person by first name. Sign off as "[Growth Lead name], Sprinto".
+- Open with ONE specific hook taken from a quoted signal (for example, their "SOC 2 coming
+  soon" line, their enterprise plan, or a named regulated customer). No generic openers
+  such as "I hope this finds you well" or "I came across your company".
+- Connect the hook to ONE of the two pain points, in their language, not compliance jargon.
+- One sentence on Sprinto: helps SaaS teams get audit-ready for SOC 2 in weeks, with a
+  dedicated compliance expert, without pulling engineers off product.
+- One soft ask: a short call, or "worth a look?". No pressure, no fake urgency.
+- Under 120 words. Plain text. No emojis, no exclamation marks.
+- Every fact about their company must come from a quoted page. If unsure, leave it out.
+
+==================================================================
+OUTPUT (what to return for every company)
+==================================================================
+- Fact fields: certified, b2b_saas, handles_data, pressure signals, stage
+  (each with the exact quote and the page it came from, or EMPTY)
+- Reasons: each rule or signal used, with the exact quote and the page it came from
+- (Code then adds up the points and sets the status.)
+- Contact check: does the chosen title fit the company's size? (yes / no, one line)
+- Two pain points, each linked to a quoted signal
+- The email (only for GOOD FIT or GOOD FIT, FLAGGED)

@@ -1,0 +1,23 @@
+{
+  "name": "sprinto-outreach-desk",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "prebuild": "node scripts/embed-rules.mjs",
+    "build": "next build",
+    "predev": "node scripts/embed-rules.mjs",
+    "dev": "next dev",
+    "start": "next start"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "dependencies": {
+    "@supabase/supabase-js": "^2.119.0",
+    "cheerio": "^1.2.0",
+    "next": "15.5.29",
+    "nodemailer": "^10.6.0",
+    "react": "19.2.1",
+    "react-dom": "19.2.1"
+  }
+}
