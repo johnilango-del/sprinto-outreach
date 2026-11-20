@@ -209,10 +209,16 @@ export default function RunClient() {
       if (!res.ok || j.error) throw new Error(j.error || `The server answered ${res.status}. Paste a list below instead.`);
       setFound(j);
       list = (j.companies || []).map((c) => c.domain);
-      if (!list.length) {
-        throw new Error(
-          `Hunter Discover found no new companies${j.skipped_researched ? ` (${j.skipped_researched} were left out because they were researched in the last 30 days)` : ''}. Try again later, or paste a list below instead.`
-        );
+      if (list.length < 3) {
+        // Too few companies left after the size safety net: say so, and still research any that remain.
+        const msg = j.dropped_large > 0 || list.length > 0
+          ? 'Discover found mostly large companies this time. Click again for a new batch, or paste your own list below.'
+          : `Hunter Discover found no new companies${j.skipped_researched ? ` (${j.skipped_researched} were left out because they were researched in the last 30 days)` : ''}. Click again later, or paste your own list below.`;
+        setFindError(msg);
+        if (!list.length) {
+          setFinding(false);
+          return;
+        }
       }
     } catch (err) {
       setFindError(err.message || String(err));
@@ -275,7 +281,10 @@ export default function RunClient() {
               {found.total_matching ? `${found.total_matching.toLocaleString('en-GB')} companies match on Hunter. ` : ''}
               {found.skipped_researched ? `${found.skipped_researched} researched in the last 30 days were left out. ` : ''}
               {found.from_cache ? 'Saved search reused. ' : ''}
-              Hunter only gives name, domain and email count, so industry and size show the search they matched.
+              {found.dropped_large ? `${found.dropped_large} larger companies were left out. ` : ''}
+            </p>
+            <p className="small muted" style={{ margin: '10px 0 0' }}>
+              Size is estimated from the number of emails Hunter knows; the fit check confirms it.
             </p>
             <div className="note-box">Discovery only suggests companies. The fit check decides who qualifies.</div>
             <ul className="prospect-list simple">
@@ -287,10 +296,7 @@ export default function RunClient() {
                       {c.domain} →
                     </a>
                   </span>
-                  <span className="p-meta small muted">
-                    {c.industry} · {c.headcount} · {c.location || 'location not given by Hunter'}
-                    {c.emails ? ` · ${c.emails} emails known to Hunter` : ''}
-                  </span>
+                  <span className="p-meta small muted">{c.emails} emails known to Hunter</span>
                 </li>
               ))}
             </ul>
