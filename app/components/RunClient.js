@@ -1,7 +1,7 @@
 'use client';
 
 import { useRef, useState } from 'react';
-import { DEFAULT_FILTERS, INDUSTRY_OPTIONS, HEADCOUNT_OPTIONS, REGION_OPTIONS } from '@/lib/discoverOptions';
+import { MAX_PER_RUN } from '@/lib/discoverOptions';
 import Link from 'next/link';
 import { Icon } from './Icons';
 import StatusTag from './StatusTag';
@@ -93,26 +93,6 @@ function Track({ item }) {
   );
 }
 
-function CheckGroup({ legend, options, values, onChange, disabled }) {
-  return (
-    <fieldset className="check-group" disabled={disabled}>
-      <legend>{legend}</legend>
-      <div className="check-row">
-        {options.map((o) => (
-          <label key={o.value} className={`check-pill ${values.includes(o.value) ? 'on' : ''}`}>
-            <input
-              type="checkbox"
-              checked={values.includes(o.value)}
-              onChange={(e) => onChange(e.target.checked ? [...values, o.value] : values.filter((v) => v !== o.value))}
-            />
-            {o.label}
-          </label>
-        ))}
-      </div>
-    </fieldset>
-  );
-}
-
 export default function RunClient() {
   const [text, setText] = useState('');
   const [items, setItems] = useState([]);
@@ -121,13 +101,9 @@ export default function RunClient() {
   const progressRef = useRef(null);
 
   // discovery state
-  const [filters, setFilters] = useState(DEFAULT_FILTERS);
-  const [includeResearched, setIncludeResearched] = useState(false);
   const [finding, setFinding] = useState(false);
   const [found, setFound] = useState(null); // { companies, ... }
-  const [picked, setPicked] = useState([]);
   const [findError, setFindError] = useState('');
-  const setF = (k) => (v) => setFilters((f) => ({ ...f, [k]: v }));
 
   const update = (index, fn) => setItems((prev) => prev.map((it, i) => (i === index ? fn(it) : it)));
 
@@ -220,26 +196,31 @@ export default function RunClient() {
     runList(parseList(text), 'pasted');
   }
 
-  async function findProspects(e) {
-    e.preventDefault();
+  // One click: Hunter Discover (fixed search from fit-rules.txt), then research every company found, one at a time.
+  async function findAndResearch() {
+    if (busy || finding) return;
     setFinding(true);
     setFindError('');
     setFound(null);
+    let list = [];
     try {
-      const res = await fetch('/api/discover', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ filters, includeResearched }),
-      });
+      const res = await fetch('/api/discover', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: '{}' });
       const j = await res.json().catch(() => ({}));
-      if (!res.ok || j.error) throw new Error(j.error || `The server answered ${res.status}.`);
+      if (!res.ok || j.error) throw new Error(j.error || `The server answered ${res.status}. Paste a list below instead.`);
       setFound(j);
-      setPicked(j.companies.map((c) => c.domain));
+      list = (j.companies || []).map((c) => c.domain);
+      if (!list.length) {
+        throw new Error(
+          `Hunter Discover found no new companies${j.skipped_researched ? ` (${j.skipped_researched} were left out because they were researched in the last 30 days)` : ''}. Try again later, or paste a list below instead.`
+        );
+      }
     } catch (err) {
       setFindError(err.message || String(err));
-    } finally {
       setFinding(false);
+      return;
     }
+    setFinding(false);
+    await runList(list, 'discovered');
   }
 
   const count = parseList(text).length;
@@ -260,39 +241,20 @@ export default function RunClient() {
             the fit rules, finds the right person and drafts an email. Nothing is sent until you click.
           </p>
 
-          <form className="paste-card find-card" onSubmit={findProspects}>
-            <h2 className="card-h">Find prospects for Sprinto</h2>
-            <p className="small muted" style={{ margin: '4px 0 16px' }}>
-              Pre-filled from Sprinto’s ideal customer: B2B software, 11-500 people, based in the US, UK or Europe. Agencies, IT
-              consultancies, public companies, schools, government and non-profits are always left out.
-            </p>
-            <div className="form-grid">
-              <div className="field wide">
-                <label htmlFor="q">Describe the companies (plain words)</label>
-                <input id="q" value={filters.query} onChange={(e) => setF('query')(e.target.value)} disabled={finding || busy} />
-              </div>
-              <div className="field wide">
-                <label htmlFor="kw">Keywords (comma separated, any can match)</label>
-                <input id="kw" value={filters.keywords} onChange={(e) => setF('keywords')(e.target.value)} disabled={finding || busy} />
-              </div>
-            </div>
-            <CheckGroup legend="Industry" options={INDUSTRY_OPTIONS} values={filters.industries} onChange={setF('industries')} disabled={finding || busy} />
-            <CheckGroup legend="Headcount" options={HEADCOUNT_OPTIONS} values={filters.headcount} onChange={setF('headcount')} disabled={finding || busy} />
-            <CheckGroup legend="Headquarters" options={REGION_OPTIONS} values={filters.regions} onChange={setF('regions')} disabled={finding || busy} />
-            <label className="small" style={{ display: 'flex', gap: 8, alignItems: 'center', marginTop: 14 }}>
-              <input type="checkbox" checked={includeResearched} onChange={(e) => setIncludeResearched(e.target.checked)} disabled={finding || busy} />
-              Include companies already researched in the last 30 days
-            </label>
-            <div className="run-row" style={{ marginTop: 18 }}>
-              <button className="btn btn-primary btn-big" type="submit" disabled={finding || busy}>
-                <Icon name="target" /> {finding ? 'Searching Hunter…' : 'Find prospects'}
+          <div className="find-action">
+            <button className="btn btn-on-plum btn-huge" type="button" onClick={findAndResearch} disabled={finding || busy}>
+              <Icon name="target" size={20} /> {finding ? 'Finding prospects…' : busy ? 'Researching…' : 'Find & research prospects'}
+            </button>
+            {busy && (
+              <button type="button" className="btn btn-secondary" onClick={() => (stopRef.current = true)}>
+                Stop after this one
               </button>
-              <span className="small muted credit-note">
-                Free: Hunter’s API documentation says a Discover search “is free” and uses no credits (your Hunter plan must
-                include Discover). Researching a company later uses the usual Hunter contact-search credits.
-              </span>
-            </div>
-          </form>
+            )}
+          </div>
+          <p className="find-note">
+            Searches for Sprinto’s ideal customer: B2B software companies, 11–500 people, anywhere in the world. Up to {MAX_PER_RUN} per run.
+          </p>
+          <p className="find-note">Discover searches are free on Hunter (no credits); researching each company uses the usual contact-search credits.</p>
         </div>
       </section>
 
@@ -303,71 +265,35 @@ export default function RunClient() {
           </div>
         )}
 
-        {found && (
+        {found && companies.length > 0 && (
           <div className="card" style={{ marginTop: 28 }} id="prospects">
             <div className="eyebrow">Prospects found</div>
-            <h2 style={{ fontSize: 26, margin: '6px 0 4px' }}>
-              {companies.length} compan{companies.length === 1 ? 'y' : 'ies'} to research
+            <h2 style={{ fontSize: 24, margin: '6px 0 4px' }}>
+              {companies.length} compan{companies.length === 1 ? 'y' : 'ies'} found, researching them now
             </h2>
             <p className="small muted" style={{ margin: 0 }}>
-              {found.total_matching ? `${found.total_matching.toLocaleString('en-GB')} companies match these filters on Hunter. ` : ''}
-              {found.skipped_researched ? `${found.skipped_researched} already researched in the last 30 days were left out. ` : ''}
+              {found.total_matching ? `${found.total_matching.toLocaleString('en-GB')} companies match on Hunter. ` : ''}
+              {found.skipped_researched ? `${found.skipped_researched} researched in the last 30 days were left out. ` : ''}
               {found.from_cache ? 'Saved search reused. ' : ''}
-              Hunter’s Discover results list only the company name, domain and number of known emails, so industry, size and location
-              below are the filters they matched, not checked facts.
+              Hunter only gives name, domain and email count, so industry and size show the search they matched.
             </p>
             <div className="note-box">Discovery only suggests companies. The fit check decides who qualifies.</div>
-
-            {companies.length === 0 ? (
-              <div className="empty">No new companies matched. Try more industries, fewer keywords, or tick “include companies already researched”.</div>
-            ) : (
-              <>
-                <div className="select-row">
-                  <button type="button" className="linklike" onClick={() => setPicked(companies.map((c) => c.domain))}>
-                    Select all
-                  </button>
-                  <span className="muted">/</span>
-                  <button type="button" className="linklike" onClick={() => setPicked([])}>
-                    none
-                  </button>
-                  <span className="small muted">
-                    {picked.length} of {companies.length} ticked
+            <ul className="prospect-list simple">
+              {companies.map((c) => (
+                <li key={c.domain}>
+                  <span className="p-main">
+                    <strong>{c.name}</strong>
+                    <a href={`https://${c.domain}`} target="_blank" rel="noopener noreferrer" className="readnow">
+                      {c.domain} →
+                    </a>
                   </span>
-                </div>
-                <ul className="prospect-list">
-                  {companies.map((c) => (
-                    <li key={c.domain}>
-                      <label>
-                        <input
-                          type="checkbox"
-                          checked={picked.includes(c.domain)}
-                          onChange={(e) => setPicked((p) => (e.target.checked ? [...p, c.domain] : p.filter((d) => d !== c.domain)))}
-                          disabled={busy}
-                        />
-                        <span className="p-main">
-                          <strong>{c.name}</strong>
-                          <a href={`https://${c.domain}`} target="_blank" rel="noopener noreferrer" className="readnow" onClick={(e) => e.stopPropagation()}>
-                            {c.domain} →
-                          </a>
-                        </span>
-                        <span className="p-meta small muted">
-                          {c.industry || `matched: ${found.summary.industries.join(', ') || 'any industry'}`} ·{' '}
-                          {c.headcount || `${found.summary.headcount.join(', ') || 'any size'} staff`} ·{' '}
-                          {c.location || REGION_OPTIONS.filter((o) => found.summary.regions.includes(o.value)).map((o) => o.label).join(' / ') || 'any region'}
-                          {c.emails ? ` · ${c.emails} emails known to Hunter` : ''}
-                        </span>
-                      </label>
-                    </li>
-                  ))}
-                </ul>
-                <div className="run-row">
-                  <button type="button" className="btn btn-primary btn-big" disabled={busy || picked.length === 0} onClick={() => runList(companies.filter((c) => picked.includes(c.domain)).map((c) => c.domain), 'discovered')}>
-                    <Icon name="play" /> Research these ({picked.length})
-                  </button>
-                  <span className="small muted">{statusNote || 'They run one at a time, about a minute each at most.'}</span>
-                </div>
-              </>
-            )}
+                  <span className="p-meta small muted">
+                    {c.industry} · {c.headcount} · {c.location || 'location not given by Hunter'}
+                    {c.emails ? ` · ${c.emails} emails known to Hunter` : ''}
+                  </span>
+                </li>
+              ))}
+            </ul>
           </div>
         )}
 

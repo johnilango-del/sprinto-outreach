@@ -1,5 +1,5 @@
 import { hunterDiscover } from '@/lib/hunter';
-import { buildDiscoverBody } from '@/lib/discoverOptions';
+import { buildDiscoverBody, MAX_PER_RUN, SEARCH_SUMMARY } from '@/lib/discoverOptions';
 import { normaliseDomain } from '@/lib/domain';
 import { db } from '@/lib/supabase';
 
@@ -7,15 +7,13 @@ export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 export const maxDuration = 30;
 
-const MAX_SHOWN = 10;
+const MAX_SHOWN = MAX_PER_RUN;
 
 // Finds companies with Hunter Discover. Only suggests domains; the existing research pipeline decides fit.
 export async function POST(req) {
   const input = await req.json().catch(() => ({}));
-  const { body, summary } = buildDiscoverBody(input?.filters || {});
-  if (!body.query && !body.industry.include && !body.keywords) {
-    return Response.json({ error: 'Add a description, a keyword or at least one industry.' }, { status: 400 });
-  }
+  // Fixed search from fit-rules.txt; nothing the browser sends can change it.
+  const body = buildDiscoverBody();
 
   const h = await hunterDiscover(body);
   if (!h.ok) {
@@ -53,9 +51,9 @@ export async function POST(req) {
         name: String(c?.organization || '').trim() || domain,
         emails: Number(c?.emails_count?.total ?? 0) || 0,
         // Hunter's Discover reply does not include industry, headcount or location per company.
-        industry: c?.industry || null,
-        headcount: c?.headcount || null,
-        location: c?.location || null,
+        industry: SEARCH_SUMMARY.industry,
+        headcount: SEARCH_SUMMARY.headcount,
+        location: null,
       });
     }
   }
@@ -67,6 +65,5 @@ export async function POST(req) {
     skipped_researched: skipped,
     from_cache: !!h.from_cache,
     applied: h.data?.meta?.filters || null,
-    summary,
   });
 }
