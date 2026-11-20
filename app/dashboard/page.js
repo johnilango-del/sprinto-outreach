@@ -58,7 +58,7 @@ function Bars({ rows }) {
 
 export default async function Dashboard() {
   const { runs, error } = await loadRuns(
-    'id, created_at, domain, status, status_reason, flags, email_original, email_status, edit_percent, fit_agreement, seconds_taken, contact_source'
+    'id, created_at, domain, status, status_reason, flags, email_original, email_status, edit_percent, fit_agreement, seconds_taken, contact_source, domain_source:fields->>domain_source'
   );
   const companies = latestPerDomain(runs);
   const total = companies.length;
@@ -97,6 +97,9 @@ export default async function Dashboard() {
   const byList = qualifying.filter((c) => c.contact_source === 'apollo_list').length;
   const autoFound = pct(byHunter, qualifying.length);
 
+  // Companies found automatically: distinct companies with at least one run that came from Hunter Discover.
+  const discovered = new Set(runs.filter((r) => r.domain_source === 'discovered').map((r) => r.domain)).size;
+
   const agree = runs.filter((r) => r.fit_agreement === 'agree').length;
   const disagree = runs.filter((r) => r.fit_agreement === 'disagree').length;
   const agreement = pct(agree, agree + disagree);
@@ -119,6 +122,7 @@ export default async function Dashboard() {
         )}
 
         <div className="tiles">
+          <Tile label="Companies found automatically" value={discovered} sub={`of ${total} companies came from Hunter Discover (the rest were pasted)`} />
           <Tile label="Companies processed" value={total} sub={`${runs.length} run${runs.length === 1 ? '' : 's'} in total`} />
           <Tile label="Fit rate" value={fitRate} unit={fitRate != null ? '%' : ''} sub={`${fits} of ${judged} judged companies qualified (errors left out)`} />
           <Tile

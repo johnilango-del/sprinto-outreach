@@ -5,9 +5,9 @@ import { usePathname } from 'next/navigation';
 import { Icon } from './Icons';
 
 const LINKS = [
-  { href: '/', label: 'Run' },
+  { href: '/', label: 'Find & Run' },
   { href: '/results', label: 'Results' },
-  { href: '/contacts', label: 'Contacts' },
+  { href: '/contacts', label: 'Backup contacts' },
   { href: '/dashboard', label: 'Dashboard' },
 ];
 
@@ -40,8 +40,8 @@ export default function Nav() {
             );
           })}
         </nav>
-        <Link href="/#run" className="btn btn-on-plum btn-small btn-cta">
-          <Icon name="play" /> Run a list
+        <Link href="/#find" className="btn btn-on-plum btn-small btn-cta">
+          <Icon name="target" /> Find prospects
         </Link>
       </div>
     </header>

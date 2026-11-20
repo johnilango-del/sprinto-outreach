@@ -26,7 +26,7 @@ export async function POST(req) {
         }
       };
       try {
-        await runCompany(website, emit);
+        await runCompany(website, emit, { source: body?.source === 'discovered' ? 'discovered' : 'pasted' });
       } catch (e) {
         emit({ type: 'error', message: e?.message || String(e) });
       } finally {

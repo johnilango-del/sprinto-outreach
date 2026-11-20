@@ -20,6 +20,11 @@ export function ContactLine({ contact }) {
   );
 }
 
+export function OriginTag({ p }) {
+  if (!p?.origin_tag) return null;
+  return <span className={`origin-tag origin-${p.origin}`}>{p.origin_tag}</span>;
+}
+
 export function ActionBox({ items }) {
   if (!items?.length) return null;
   return (
@@ -87,6 +92,7 @@ export default function RunSummary({ p, compact = false, hideTag = false }) {
         <div className="verdict-line">
           {!hideTag && <StatusTag status={p.status} />}
           <span>{p.verdict}</span>
+          <OriginTag p={p} />
         </div>
         {(p.actions.length > 0 || p.warnings.length > 0) && (
           <div className="chips">
@@ -110,6 +116,7 @@ export default function RunSummary({ p, compact = false, hideTag = false }) {
       <div className="verdict-line">
         {!hideTag && <StatusTag status={p.status} />}
         <span className="verdict-text">{p.verdict}</span>
+        <OriginTag p={p} />
       </div>
       <ActionBox items={p.actions} />
       <WarningBox items={p.warnings} />
